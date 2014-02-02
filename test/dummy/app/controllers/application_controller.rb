@@ -6,12 +6,24 @@ class ApplicationController < ActionController::Base
   include CleanPagination
 
   def index
-    paginate total_items, 100 do |limit, offset|
-      render json: [offset .. offset+limit]
+    paginate total_items, max_range do |limit, offset|
+      action limit, offset
+      render status: index_status
     end
   end
 
   def total_items
-    raise 'stub it for now'
+    raise 'stub me'
+  end
+
+  def max_range
+    raise 'stub me'
+  end
+
+  def action limit, offset
+  end
+
+  def index_status
+    200
   end
 end
