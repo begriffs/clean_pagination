@@ -16,6 +16,10 @@ module CleanPagination
     offset = from
 
     if limit > max_range_size
+      response.status = 413
+      return
+    end
+    if to <= from || to >= total_items
       response.status = 416
       return
     end
@@ -23,8 +27,14 @@ module CleanPagination
     yield limit, offset
 
     if limit < total_items
+      display_total = if total_items < Float::INFINITY
+                        total_items
+                      else
+                        '*'
+                      end
       headers['Range-Unit'] = 'items'
-      headers['Content-Range'] = "#{from}-#{to}/#{total_items}"
+      headers['Content-Range'] =
+        "#{from}-#{to}/#{display_total}"
       response.status = 206 if response.status == 200
     end
   end

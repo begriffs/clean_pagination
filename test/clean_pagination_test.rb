@@ -18,7 +18,7 @@ class ApplicationControllerTest < ActionController::TestCase
   test 'naive request fails if data too large' do
     @controller.expects(:action).never
     get :index
-    assert_equal 416, response.status
+    assert_equal 413, response.status
     assert_equal 'items', response.headers['Accept-Ranges']
   end
 
@@ -39,7 +39,7 @@ class ApplicationControllerTest < ActionController::TestCase
 
     @controller.expects(:action).never
     get :index
-    assert_equal 416, response.status
+    assert_equal 413, response.status
   end
 
   test "passes along exceptional status codes" do
@@ -51,5 +51,32 @@ class ApplicationControllerTest < ActionController::TestCase
       get :index
       assert_equal code, response.status
     end
+  end
+
+  test "reports infinite/unknown collection" do
+    @controller.stubs(:total_items).returns Float::INFINITY
+
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "0-9"
+    get :index
+    assert_equal '0-9/*', response.headers['Content-Range']
+  end
+
+  test "refuses offside ranges" do
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "1-0"
+
+    @controller.expects(:action).never
+    get :index
+    assert_equal 416, response.status
+  end
+
+  test "refuses ranges beyond collection" do
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "50-101"
+
+    @controller.expects(:action).never
+    get :index
+    assert_equal 416, response.status
   end
 end
