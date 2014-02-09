@@ -15,7 +15,7 @@ class ApplicationControllerTest < ActionController::TestCase
     @controller.stubs(:max_range).returns 100
   end
 
-  test 'naive request is OK if data not too large' do
+  test 'rangeless request range works normally if max_range >= total' do
     @controller.stubs(:total_items).returns 100
 
     @controller.expects(:action).with(100, 0)
@@ -24,12 +24,12 @@ class ApplicationControllerTest < ActionController::TestCase
     assert_equal 'items', response.headers['Accept-Ranges']
   end
 
-  test 'naive request fails if data too large' do
-    @controller.expects(:action).never
+  test 'rangeless request truncates if max_range < total' do
+    @controller.expects(:action).with(100, 0)
     get :index
-    assert_equal 413, response.status
+    assert_equal 206, response.status
     assert_equal 'items', response.headers['Accept-Ranges']
-    assert_equal '*/101', response.headers['Content-Range']
+    assert_equal '0-99/101', response.headers['Content-Range']
   end
 
   test 'an acceptable range succeeds' do
