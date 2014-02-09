@@ -225,4 +225,27 @@ class ApplicationControllerTest < ActionController::TestCase
       end
     end
   end
+
+  test "omits prev and first links at start" do
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "0-9"
+
+    get :index
+    links = parse_link_ranges response.headers['Link']
+
+    assert_nil links['first']
+    assert_nil links['prev']
+  end
+
+  test "omits next and last links at end" do
+    @controller.stubs(:total_items).returns 100
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "90-99"
+
+    get :index
+    links = parse_link_ranges response.headers['Link']
+
+    assert_nil links['last']
+    assert_nil links['next']
+  end
 end
