@@ -169,4 +169,60 @@ class ApplicationControllerTest < ActionController::TestCase
     assert_equal '0-39', links['prev']
     assert_equal '0-39', links['first']
   end
+
+  test "prev is the left inverse of next" do
+    @request.headers['Range-Unit'] = 'items'
+
+    100.times do
+      total_items = rand(1..20)
+      to = rand(1..total_items)
+      from = rand(0...to)
+      max_range = rand(1..20)
+
+      msg = "#{from}-#{to}/#{total_items} max_range=#{max_range}"
+
+      @controller.stubs(:total_items).returns total_items
+      @controller.stubs(:max_range).returns max_range
+      @request.headers['Range'] = "#{from}-#{to}"
+      get :index
+
+      links = parse_link_ranges response.headers['Link']
+      if links['next']
+        msg += " thence to #{links['next']}/#{total_items}"
+        @request.headers['Range'] = links['next']
+        get :index
+
+        links = parse_link_ranges response.headers['Link']
+        assert_equal "#{from}-#{to}", links['prev'], msg
+      end
+    end
+  end
+
+  test "for from > to-from, next is the right inverse of prev" do
+    @request.headers['Range-Unit'] = 'items'
+
+    100.times do
+      total_items = rand(1..20)
+      to = rand(1..total_items)
+      from = rand(to/2+1...to)
+      max_range = rand(1..20)
+
+      msg = "#{from}-#{to}/#{total_items} max_range=#{max_range}"
+
+      @controller.stubs(:total_items).returns total_items
+      @controller.stubs(:max_range).returns max_range
+      @request.headers['Range'] = "#{from}-#{to}"
+      get :index
+
+      links = parse_link_ranges response.headers['Link']
+      if links['prev']
+        msg += " thence to #{links['prev']}/#{total_items}"
+        @request.headers['Range'] = links['prev']
+        get :index
+
+        links = parse_link_ranges response.headers['Link']
+        assert_equal "#{from}-#{to}", links['next'], msg
+      end
+    end
+  end
 end

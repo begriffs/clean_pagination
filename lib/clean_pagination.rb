@@ -55,7 +55,7 @@ module CleanPagination
         }\""
     end
     if requested_from > 0
-      previous_from = [0, requested_from - available_limit].max
+      previous_from = [0, requested_from - [requested_limit, max_range_size].min].max
       links << "<#{request.path}>; rel=\"prev\"; items=\"#{
           previous_from
         }-#{
