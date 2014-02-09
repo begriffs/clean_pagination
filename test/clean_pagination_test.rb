@@ -43,13 +43,14 @@ class ApplicationControllerTest < ActionController::TestCase
     assert_equal '0-99/101', response.headers['Content-Range']
   end
 
-  test 'an oversized range fails' do
+  test 'an oversized range is truncated' do
     @request.headers['Range-Unit'] = 'items'
     @request.headers['Range'] = "0-100"
 
-    @controller.expects(:action).never
     get :index
-    assert_equal 413, response.status
+    assert_equal 206, response.status
+    assert_equal 'items', response.headers['Range-Unit']
+    assert_equal '0-99/101', response.headers['Content-Range']
   end
 
   test "passes along exceptional status codes" do
@@ -108,7 +109,7 @@ class ApplicationControllerTest < ActionController::TestCase
     assert_equal '90-99', links['last']
   end
 
-  test "crops next page at end, shortening range" do
+  test "next page range can extend beyond last item" do
     @controller.stubs(:total_items).returns 100
 
     @request.headers['Range-Unit'] = 'items'
@@ -117,8 +118,43 @@ class ApplicationControllerTest < ActionController::TestCase
     get :index
     links = parse_link_ranges response.headers['Link']
 
-    assert_equal '90-99', links['next']
-    assert_equal '90-99', links['last']
+    assert_equal '90-129', links['next']
+  end
+
+  test "previous page range cannot go negative" do
+    @controller.stubs(:total_items).returns 100
+
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "10-99"
+
+    get :index
+    links = parse_link_ranges response.headers['Link']
+
+    assert_equal '0-89', links['prev']
+  end
+
+  test "first page range always starts at zero" do
+    @controller.stubs(:total_items).returns 100
+
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "63-72"
+
+    get :index
+    links = parse_link_ranges response.headers['Link']
+
+    assert_equal '0-9', links['first']
+  end
+
+  test "last page range can extend beyond the last item" do
+    @controller.stubs(:total_items).returns 100
+
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "0-6"
+
+    get :index
+    links = parse_link_ranges response.headers['Link']
+
+    assert_equal '98-104', links['last']
   end
 
   test "shifts penultimate page to beginning, preserving length" do
