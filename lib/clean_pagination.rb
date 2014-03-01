@@ -41,13 +41,13 @@ module CleanPagination
 
     links = []
     if available_to < total_items - 1
-      links << "<#{request.path}>; rel=\"next\"; items=\"#{
+      links << "<#{request.url}>; rel=\"next\"; items=\"#{
           available_to + 1
         }-#{
           available_to + requested_limit
         }\""
 
-      links << "<#{request.path}>; rel=\"last\"; items=\"#{
+      links << "<#{request.url}>; rel=\"last\"; items=\"#{
         # let rounding do the work
         ((total_items-1) / available_limit) * available_limit
       }-#{
@@ -57,13 +57,13 @@ module CleanPagination
     if requested_from > 0
       previous_from = [0, requested_from - [requested_limit, max_range_size].min].max
 
-      links << "<#{request.path}>; rel=\"prev\"; items=\"#{
+      links << "<#{request.url}>; rel=\"prev\"; items=\"#{
           previous_from
         }-#{
           previous_from + requested_limit - 1
         }\""
 
-      links << "<#{request.path}>; rel=\"first\"; items=\"0-#{requested_limit-1}\""
+      links << "<#{request.url}>; rel=\"first\"; items=\"0-#{requested_limit-1}\""
     end
 
     headers['Link'] = links.join ', '
