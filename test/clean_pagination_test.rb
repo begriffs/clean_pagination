@@ -248,4 +248,14 @@ class ApplicationControllerTest < ActionController::TestCase
     assert_nil links['last']
     assert_nil links['next']
   end
+
+  test "preserves query parameters in link headers" do
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "20-29"
+    get :index, foo: 'bar'
+
+    response.headers['Link'].scan(/<[^>]+>/).each do |link|
+      assert_match /\?foo=bar/, link
+    end
+  end
 end
