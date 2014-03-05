@@ -157,6 +157,61 @@ class ApplicationControllerTest < ActionController::TestCase
     assert_equal '98-104', links['last']
   end
 
+  test "infinite collections have no last page" do
+    @controller.stubs(:total_items).returns Float::INFINITY
+
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "0-9"
+
+    get :index
+    links = parse_link_ranges response.headers['Link']
+
+    assert_nil links['last']
+  end
+
+  test "omitting the end number asks for everything" do
+    @controller.stubs(:total_items).returns Float::INFINITY
+    @controller.stubs(:max_range).returns 1000000
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "50-"
+
+    @controller.expects(:action).with(1000000, 50)
+    get :index
+  end
+
+  test "omitting the end number omits in first link too" do
+    @controller.stubs(:total_items).returns Float::INFINITY
+    @controller.stubs(:max_range).returns 1000000
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "50-"
+
+    get :index
+    links = parse_link_ranges response.headers['Link']
+    assert_equal '0-', links['first']
+  end
+
+  test "next link with omitted end number shifts by max page" do
+    @controller.stubs(:total_items).returns Float::INFINITY
+    @controller.stubs(:max_range).returns 1000000
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "50-"
+
+    get :index
+    links = parse_link_ranges response.headers['Link']
+    assert_equal '1000050-', links['next']
+  end
+
+  test "prev link with omitted end number shifts by max page" do
+    @controller.stubs(:total_items).returns Float::INFINITY
+    @controller.stubs(:max_range).returns 25
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "50-"
+
+    get :index
+    links = parse_link_ranges response.headers['Link']
+    assert_equal '25-', links['prev']
+  end
+
   test "shifts penultimate page to beginning, preserving length" do
     @controller.stubs(:total_items).returns 100
 
@@ -175,7 +230,10 @@ class ApplicationControllerTest < ActionController::TestCase
 
     100.times do
       total_items = rand(1..20)
-      to = rand(1..total_items)
+      if total_items == 20
+        total_items = Float::INFINITY
+      end
+      to = rand(1..[total_items, 20].min)
       from = rand(0...to)
       max_range = rand(1..20)
 
@@ -203,7 +261,10 @@ class ApplicationControllerTest < ActionController::TestCase
 
     100.times do
       total_items = rand(1..20)
-      to = rand(1..total_items)
+      if total_items == 20
+        total_items = Float::INFINITY
+      end
+      to = rand(1..[total_items, 20].min)
       from = rand(to/2+1...to)
       max_range = rand(1..20)
 

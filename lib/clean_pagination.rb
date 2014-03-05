@@ -8,8 +8,8 @@ module CleanPagination
 
     if request.headers['Range-Unit'] == 'items' &&
        request.headers['Range'].present?
-      if request.headers['Range'] =~ /(\d+)-(\d+)/
-        requested_from, requested_to = $1.to_i, $2.to_i
+      if request.headers['Range'] =~ /(\d+)-(\d*)/
+        requested_from, requested_to = $1.to_i, ($2.present? ? $2.to_i : Float::INFINITY)
       end
     end
 
@@ -44,15 +44,17 @@ module CleanPagination
       links << "<#{request.url}>; rel=\"next\"; items=\"#{
           available_to + 1
         }-#{
-          available_to + requested_limit
+          suppress_infinity(available_to + requested_limit)
         }\""
 
-      links << "<#{request.url}>; rel=\"last\"; items=\"#{
-        # let rounding do the work
-        ((total_items-1) / available_limit) * available_limit
-      }-#{
-        (((total_items-1) / available_limit) * available_limit) + requested_limit - 1
-      }\""
+      if total_items < Float::INFINITY
+        links << "<#{request.url}>; rel=\"last\"; items=\"#{
+          # let rounding do the work
+          ((total_items-1) / available_limit) * available_limit
+        }-#{
+          (((total_items-1) / available_limit) * available_limit) + requested_limit - 1
+        }\""
+      end
     end
     if requested_from > 0
       previous_from = [0, requested_from - [requested_limit, max_range_size].min].max
@@ -60,13 +62,19 @@ module CleanPagination
       links << "<#{request.url}>; rel=\"prev\"; items=\"#{
           previous_from
         }-#{
-          previous_from + requested_limit - 1
+          suppress_infinity(previous_from + requested_limit - 1)
         }\""
 
-      links << "<#{request.url}>; rel=\"first\"; items=\"0-#{requested_limit-1}\""
+      links << "<#{request.url}>; rel=\"first\"; items=\"0-#{suppress_infinity(requested_limit-1)}\""
     end
 
     headers['Link'] = links.join ', '
+  end
+
+  private
+
+  def suppress_infinity n
+    n < Float::INFINITY ? n : ''
   end
 
 end
