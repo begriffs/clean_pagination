@@ -12,11 +12,19 @@ pagination gem there is. Pairs nicely with
 class ApplicationController < ActionController::Base
   include CleanPagination
 
+  # Using activemodel
   def index
     max_per_page = 100
 
-    paginated Bla.count, max_per_page do |limit, offset|
+    paginate Bla.count, max_per_page do |limit, offset|
       render json: Bla.limit(limit).offset(offset)
+    end
+  end
+
+  # Using some custom data
+  def numbers
+    paginate Float::INFINITY, 100 do |limit, offset|
+      render json: (offset...offset+limit).to_a
     end
   end
 end
