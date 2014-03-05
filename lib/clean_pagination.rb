@@ -13,7 +13,7 @@ module CleanPagination
       end
     end
 
-    if requested_from >= requested_to
+    if requested_from >= [requested_to, total_items].min
       response.status = 416
       headers['Content-Range'] = "*/#{total_items}"
       return

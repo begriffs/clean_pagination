@@ -83,6 +83,16 @@ class ApplicationControllerTest < ActionController::TestCase
     assert_equal '*/101', response.headers['Content-Range']
   end
 
+  test "refuses range start past end" do
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "101-"
+
+    @controller.expects(:action).never
+    get :index
+    assert_equal 416, response.status
+    assert_equal '*/101', response.headers['Content-Range']
+  end
+
   test "handles ranges beyond collection length via truncation" do
     @request.headers['Range-Unit'] = 'items'
     @request.headers['Range'] = "50-200"
