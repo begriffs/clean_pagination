@@ -4,7 +4,7 @@
 
 The simplest, most flexible, most standards-compliant
 pagination gem there is. Pairs nicely with
-[begriffs/angular-paginated-resource](https://github.com/begriffs/angular-paginated-resource).
+[begriffs/angular-paginate-anything](https://github.com/begriffs/angular-paginate-anything).
 
 ### Usage
 
@@ -47,4 +47,4 @@ end
 
 [TODO: explain what the headers mean.] Until this is written you can consult
 the tests for an idea how it works, or use a client that is compatible, such as
-[begriffs/angular-paginated-resource](https://github.com/begriffs/angular-paginated-resource).
+[begriffs/angular-paginate-anything](https://github.com/begriffs/angular-paginate-anything).
