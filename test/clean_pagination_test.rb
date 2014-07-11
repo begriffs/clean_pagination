@@ -83,6 +83,28 @@ class ApplicationControllerTest < ActionController::TestCase
     assert_equal '*/101', response.headers['Content-Range']
   end
 
+  test "accepts a range starting from 0 when there are no items" do
+    @controller.stubs(:total_items).returns 0
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "0-9"
+
+    @controller.expects(:action).never
+    get :index
+    assert_equal 200, response.status
+    assert_equal '*/0', response.headers['Content-Range']
+  end
+
+  test "refuses a range with nonzero start when there are no items" do
+    @controller.stubs(:total_items).returns 0
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "1-10"
+
+    @controller.expects(:action).never
+    get :index
+    assert_equal 416, response.status
+    assert_equal '*/0', response.headers['Content-Range']
+  end
+
   test "refuses range start past end" do
     @request.headers['Range-Unit'] = 'items'
     @request.headers['Range'] = "101-"

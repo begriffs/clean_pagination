@@ -13,7 +13,8 @@ module CleanPagination
       end
     end
 
-    if requested_from > requested_to || requested_from >= total_items
+    if (requested_from > requested_to) ||
+       (requested_from > 0 && requested_from >= total_items)
       response.status = 416
       headers['Content-Range'] = "*/#{total_items}"
       return
@@ -23,6 +24,12 @@ module CleanPagination
                     total_items - 1,
                     requested_from + max_range_size - 1
                    ].min
+    available_limit = available_to - requested_from + 1
+    if available_limit == 0
+      headers['Content-Range'] = "*/0"
+      return
+    end
+
     headers['Content-Range'] = "#{
         requested_from
       }-#{
@@ -31,7 +38,6 @@ module CleanPagination
         total_items < Float::INFINITY ? total_items : '*'
       }"
 
-    available_limit = available_to - requested_from + 1
     yield available_limit, requested_from
     if available_limit < total_items && response.status == 200
       response.status = 206
