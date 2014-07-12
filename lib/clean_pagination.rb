@@ -27,6 +27,7 @@ module CleanPagination
     available_limit = available_to - requested_from + 1
     if available_limit == 0
       headers['Content-Range'] = "*/0"
+      response.status = 204
       return
     end
 

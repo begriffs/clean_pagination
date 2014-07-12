@@ -90,7 +90,7 @@ class ApplicationControllerTest < ActionController::TestCase
 
     @controller.expects(:action).never
     get :index
-    assert_equal 200, response.status
+    assert_equal 204, response.status
     assert_equal '*/0', response.headers['Content-Range']
   end
 
