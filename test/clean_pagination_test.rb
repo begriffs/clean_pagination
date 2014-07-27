@@ -94,6 +94,14 @@ class ApplicationControllerTest < ActionController::TestCase
     assert_equal '*/0', response.headers['Content-Range']
   end
 
+  test "returns empty body when there are zero total items" do
+    @controller.stubs(:total_items).returns 0
+    @controller.expects(:action).never
+    get :index
+    assert_equal 204, response.status
+    assert_equal "", response.body
+  end
+
   test "refuses a range with nonzero start when there are no items" do
     @controller.stubs(:total_items).returns 0
     @request.headers['Range-Unit'] = 'items'

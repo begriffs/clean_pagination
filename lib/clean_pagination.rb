@@ -4,7 +4,7 @@ module CleanPagination
     headers['Accept-Ranges'] = 'items'
     headers['Range-Unit'] = 'items'
 
-    requested_from, requested_to = 0, total_items - 1
+    requested_from, requested_to = 0, [0, total_items - 1].max
 
     if request.headers['Range-Unit'] == 'items' &&
        request.headers['Range'].present?
@@ -17,6 +17,7 @@ module CleanPagination
        (requested_from > 0 && requested_from >= total_items)
       response.status = 416
       headers['Content-Range'] = "*/#{total_items}"
+      render text: 'invalid pagination range'
       return
     end
 
@@ -25,9 +26,11 @@ module CleanPagination
                     requested_from + max_range_size - 1
                    ].min
     available_limit = available_to - requested_from + 1
+
     if available_limit == 0
       headers['Content-Range'] = "*/0"
       response.status = 204
+      render text: ''
       return
     end
 

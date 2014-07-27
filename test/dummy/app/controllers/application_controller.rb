@@ -8,7 +8,7 @@ class ApplicationController < ActionController::Base
   def index
     paginate total_items, max_range do |limit, offset|
       action limit, offset
-      render status: index_status
+      render json: [limit, offset], status: index_status
     end
   end
 
@@ -21,6 +21,7 @@ class ApplicationController < ActionController::Base
   end
 
   def action limit, offset
+    # gets spied on
   end
 
   def index_status
