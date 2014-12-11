@@ -78,7 +78,7 @@ module CleanPagination
       links << "<#{request.url}>; rel=\"first\"; items=\"0-#{suppress_infinity(requested_limit-1)}\""
     end
 
-    headers['Link'] = links.join ', '
+    headers['Link'] = links.join ', ' unless links.empty?
   end
 
   private

@@ -369,4 +369,12 @@ class ApplicationControllerTest < ActionController::TestCase
       assert_match /\?foo=bar/, link
     end
   end
+
+  test "omits empty link header" do
+    @controller.stubs(:total_items).returns 2
+
+    get :index
+
+    assert_equal false, response.headers.has_key?('Link')
+  end
 end
