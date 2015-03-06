@@ -1,6 +1,6 @@
 module CleanPagination
 
-  def paginate total_items, max_range_size
+  def paginate total_items, max_range_size, render_errors: true, raise_errors: false
     headers['Accept-Ranges'] = 'items'
     headers['Range-Unit'] = 'items'
 
@@ -17,8 +17,12 @@ module CleanPagination
        (requested_from > 0 && requested_from >= total_items)
       response.status = 416
       headers['Content-Range'] = "*/#{total_items}"
-      render text: 'invalid pagination range'
-      return
+      message = 'invalid pagination range'
+      raise RangeError, message if raise_errors
+      if render_errors
+        render text: message
+        return
+      end
     end
 
     available_to = [requested_to,
@@ -30,7 +34,7 @@ module CleanPagination
     if available_limit == 0
       headers['Content-Range'] = "*/0"
       response.status = 204
-      render text: ''
+      render text: '' if render_errors
       return
     end
 
