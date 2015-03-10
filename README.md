@@ -27,6 +27,17 @@ class ApplicationController < ActionController::Base
       render json: (offset...offset+limit).to_a
     end
   end
+  
+  # Using optional settings
+  def options
+    begin
+      paginate Foo.scope.count, max_per_page, allow_render: false, raise_errors: true do |limit, offset|
+        respond_with Foo.scope.limit(limit).offset(offset)
+      end
+    rescue RangeError
+      render json: { error: { message: "invalid pagination range" } }
+    end
+  end
 end
 ```
 
@@ -44,6 +55,14 @@ end
 * **Semantic HTTP.** Built in strict conformance to RFCs 2616 and 5988.
 
 ### Under the hood
+
+To prevent this gem from rendering while still allowing it to set
+headers and response codes, pass `allow_render: false` to `paginate`.
+This may be used to avoid `DoubleRenderError` situations.
+
+To handle the invalid request range condition in your app, pass the
+`raise_errors: true` option.  This will raise a `RangeError` which you can
+rescue (and thus control what is rendered).  Headers will still be set.
 
 [TODO: explain what the headers mean.] Until this is written you can consult
 the tests for an idea how it works, or use a client that is compatible, such as
