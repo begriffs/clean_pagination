@@ -1,7 +1,7 @@
 module CleanPagination
 
   def paginate total_items, max_range_size, options = {}
-    options[:allow_render] ||= true
+    options[:allow_render] = true if options[:allow_render].nil?
     options[:raise_errors] ||= false
 
     headers['Accept-Ranges'] = 'items'

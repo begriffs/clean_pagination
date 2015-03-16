@@ -6,10 +6,20 @@ class ApplicationController < ActionController::Base
   include CleanPagination
 
   def index
-    paginate total_items, max_range do |limit, offset|
+    paginate total_items, max_range,
+      allow_render: allow_render, raise_errors: raise_errors do |limit, offset|
+
       action limit, offset
       render json: [limit, offset], status: index_status
     end
+  end
+
+  def allow_render
+    true # stub me
+  end
+
+  def raise_errors
+    false # stub me
   end
 
   def total_items
