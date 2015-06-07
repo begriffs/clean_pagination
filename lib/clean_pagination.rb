@@ -22,10 +22,8 @@ module CleanPagination
       headers['Content-Range'] = "*/#{total_items}"
       message = 'invalid pagination range'
       raise RangeError, message if options[:raise_errors]
-      if options[:allow_render]
-        render text: message
-        return
-      end
+      render text: message if options[:allow_render]
+      return
     end
 
     available_to = [requested_to,
@@ -36,18 +34,15 @@ module CleanPagination
 
     if available_limit == 0
       headers['Content-Range'] = "*/0"
-      response.status = 204
-      render text: '' if options[:allow_render]
-      return
+    else
+      headers['Content-Range'] = "#{
+          requested_from
+        }-#{
+          available_to
+        }/#{
+          total_items < Float::INFINITY ? total_items : '*'
+        }"
     end
-
-    headers['Content-Range'] = "#{
-        requested_from
-      }-#{
-        available_to
-      }/#{
-        total_items < Float::INFINITY ? total_items : '*'
-      }"
 
     yield available_limit, requested_from
     if available_limit < total_items && response.status == 200
