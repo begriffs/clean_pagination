@@ -146,6 +146,18 @@ class ApplicationControllerTest < ActionController::TestCase
     assert_equal '0-0/101', response.headers['Content-Range']
   end
 
+  test "allows one-item responses" do
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "0-9"
+    @controller.stubs(:total_items).returns 1
+    @controller.stubs(:max_range).returns 100
+
+    @controller.expects(:action).with(1, 0)
+    get :index
+    assert_equal 200, response.status
+    assert_equal '0-0/1', response.headers['Content-Range']
+  end
+
   test "handles ranges beyond collection length via truncation" do
     @request.headers['Range-Unit'] = 'items'
     @request.headers['Range'] = "50-200"
