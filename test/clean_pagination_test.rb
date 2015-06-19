@@ -83,23 +83,15 @@ class ApplicationControllerTest < ActionController::TestCase
     assert_equal '*/101', response.headers['Content-Range']
   end
 
-  test "accepts a range starting from 0 when there are no items" do
+  test "returns 200 when no items found, delegates response to action" do
     @controller.stubs(:total_items).returns 0
     @request.headers['Range-Unit'] = 'items'
     @request.headers['Range'] = "0-9"
 
-    @controller.expects(:action).never
+    @controller.expects(:action).with(0, 0)
     get :index
-    assert_equal 204, response.status
+    assert_equal 200, response.status
     assert_equal '*/0', response.headers['Content-Range']
-  end
-
-  test "returns empty body when there are zero total items" do
-    @controller.stubs(:total_items).returns 0
-    @controller.expects(:action).never
-    get :index
-    assert_equal 204, response.status
-    assert_equal "", response.body
   end
 
   test "refuses a range with nonzero start when there are no items" do
@@ -152,6 +144,18 @@ class ApplicationControllerTest < ActionController::TestCase
     get :index
     assert_equal 206, response.status
     assert_equal '0-0/101', response.headers['Content-Range']
+  end
+
+  test "allows one-item responses" do
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = "0-9"
+    @controller.stubs(:total_items).returns 1
+    @controller.stubs(:max_range).returns 100
+
+    @controller.expects(:action).with(1, 0)
+    get :index
+    assert_equal 200, response.status
+    assert_equal '0-0/1', response.headers['Content-Range']
   end
 
   test "handles ranges beyond collection length via truncation" do
@@ -387,7 +391,7 @@ class ApplicationControllerTest < ActionController::TestCase
     get :index, foo: 'bar'
 
     response.headers['Link'].scan(/<[^>]+>/).each do |link|
-      assert_match /\?foo=bar/, link
+      assert_match(/\?foo=bar/, link)
     end
   end
 
