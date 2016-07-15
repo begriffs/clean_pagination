@@ -2,7 +2,8 @@ module CleanPagination
   class << self
     DEFAULT_CONFIG = OpenStruct.new({
       allow_render: true,
-      raise_errors: false
+      raise_errors: false,
+      invalid_message: 'invalid pagination range'
     })
 
     def setup
@@ -33,9 +34,8 @@ module CleanPagination
        (requested_from > 0 && requested_from >= total_items)
       response.status = 416
       headers['Content-Range'] = "*/#{total_items}"
-      message = 'invalid pagination range'
-      raise RangeError, message if options[:raise_errors]
-      render text: message if options[:allow_render]
+      raise RangeError, options[:invalid_message] if options[:raise_errors]
+      render text: options[:invalid_message] if options[:allow_render]
       return
     end
 
