@@ -1,8 +1,21 @@
 module CleanPagination
+  class << self
+    DEFAULT_CONFIG = OpenStruct.new({
+      allow_render: true,
+      raise_errors: false
+    })
+
+    def setup
+      yield config
+    end
+
+    def config
+      @__config__ ||= DEFAULT_CONFIG.dup
+    end
+  end
 
   def paginate total_items, max_range_size, options = {}
-    options[:allow_render] = true if options[:allow_render].nil?
-    options[:raise_errors] ||= false
+    options = CleanPagination::config.to_h.merge(options)
 
     headers['Accept-Ranges'] = 'items'
     headers['Range-Unit'] = 'items'
