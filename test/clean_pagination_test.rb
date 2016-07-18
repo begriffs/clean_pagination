@@ -115,6 +115,30 @@ class ApplicationControllerTest < ActionController::TestCase
     assert_equal '*/101', response.headers['Content-Range']
   end
 
+  test "uses overridable default opts" do
+    ::CleanPagination.setup {|config| config.raise_errors = true }
+
+    default_setup do
+      assert_raises(RangeError) do
+        get :index
+      end
+    end
+
+    # config reset
+    default_setup do
+      assert_nothing_raised(RangeError) { get :index }
+    end
+
+    ::CleanPagination.setup {|config| config.allow_render = false }
+    default_setup do
+      assert_raises(ActionView::MissingTemplate) { get :index }
+    end
+
+    default_setup do
+      assert_equal 416, response.status
+    end
+  end
+
   test "optionally raise exception when range is invalid" do
     @request.headers['Range-Unit'] = 'items'
     @request.headers['Range'] = "1-0"
@@ -401,5 +425,18 @@ class ApplicationControllerTest < ActionController::TestCase
     get :index
 
     assert_equal false, response.headers.has_key?('Link')
+  end
+
+  def default_setup
+    @request.headers['Range-Unit'] = 'items'
+    @request.headers['Range'] = '1-0'
+    @controller.stubs(:raise_errors).returns ::CleanPagination::config.raise_errors
+    @controller.stubs(:allow_render).returns ::CleanPagination::config.allow_render
+    @controller.expects(:action).never
+
+    yield
+
+    ::CleanPagination::config.raise_errors = false
+    ::CleanPagination::config.allow_render = true
   end
 end
